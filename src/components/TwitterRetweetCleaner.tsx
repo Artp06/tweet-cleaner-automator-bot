@@ -16,7 +16,20 @@ const TwitterRetweetCleaner = () => {
   const [showProgress, setShowProgress] = useState(false);
   const [activeTab, setActiveTab] = useState("local");
 
+  const redirectToTwitterLogin = () => {
+    // Create a state parameter with the Twitter ID for potential callback
+    const state = encodeURIComponent(JSON.stringify({ twitterId }));
+    
+    // Redirect to Twitter OAuth login
+    window.location.href = `https://twitter.com/i/flow/login`;
+  };
+
   const executeLocalScript = async (twitterId: string) => {
+    // First redirect to Twitter login
+    redirectToTwitterLogin();
+    
+    // Note: The code below won't execute immediately due to the redirect
+    // It would only run if the redirect fails for some reason
     try {
       // Simulate running the script locally
       const process = new Promise<void>((resolve, reject) => {
@@ -55,31 +68,24 @@ const TwitterRetweetCleaner = () => {
     }
     
     setLoading(true);
-    setProgress(0);
-    setShowProgress(true);
     
     toast({
-      title: "Starting local process",
-      description: `Please check your terminal for login prompt for @${twitterId}`,
+      title: "Redirecting to Twitter",
+      description: `You'll be redirected to Twitter to log in as @${twitterId}`,
     });
     
+    // Execute the script which will redirect to Twitter
     const success = await executeLocalScript(twitterId);
     
-    if (success) {
-      toast({
-        title: "Success",
-        description: "Script execution completed. Check your terminal for results.",
-      });
-    } else {
+    // This code will only run if the redirect fails for some reason
+    if (!success) {
       toast({
         title: "Error",
-        description: "Failed to execute script. Check the console for more details.",
+        description: "Failed to redirect to Twitter. Check your internet connection and try again.",
         variant: "destructive",
       });
+      setLoading(false);
     }
-    
-    setLoading(false);
-    setTimeout(() => setShowProgress(false), 2000);
   };
 
   return (
@@ -117,19 +123,16 @@ const TwitterRetweetCleaner = () => {
                 )}
                 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : "Run Script Locally"}
+                  {loading ? "Redirecting to Twitter..." : "Log in to Twitter"}
                 </Button>
               </div>
             </form>
             
             <div className="mt-4">
               <Alert>
-                <AlertTitle>Local Execution</AlertTitle>
+                <AlertTitle>Twitter Login Required</AlertTitle>
                 <AlertDescription>
-                  This will run the script on your local machine. Open a terminal, navigate to the project directory and run:
-                  <code className="block bg-muted p-2 mt-2 rounded text-sm">
-                    python twitter_retweet_cleaner.py
-                  </code>
+                  You'll be redirected to Twitter's login page. After logging in, you can run the retweet cleaner script.
                 </AlertDescription>
               </Alert>
             </div>
