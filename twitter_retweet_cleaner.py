@@ -6,6 +6,7 @@ Twitter Retweet Cleaner - A script to remove all retweets from your Twitter prof
 
 import os
 import time
+import sys
 import getpass
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,23 +30,29 @@ def print_banner():
     """
     print(banner)
 
-def get_credentials():
+def get_credentials(twitter_id=None):
     """Securely get Twitter login credentials."""
     print("\n🔐 Login Information (credentials will not be stored)")
     print("-----------------------------------------------")
-    username = input("📧 Enter your Twitter username/email/phone: ")
+    
+    if twitter_id:
+        username = twitter_id
+    else:
+        username = input("📧 Enter your Twitter username/email/phone: ")
+    
     password = getpass.getpass("🔑 Enter your password: ")
     return username, password
 
-def initialize_browser():
+def initialize_browser(headless=False):
     """Initialize and configure the browser."""
     print("\n🔄 Initializing browser...")
     
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     
-    # Uncomment for headless mode (no visible browser)
-    # options.add_argument("--headless")
+    # Enable headless mode if requested
+    if headless:
+        options.add_argument("--headless")
     
     try:
         browser = webdriver.Chrome(options=options)
@@ -181,8 +188,20 @@ def main():
     clear_screen()
     print_banner()
     
-    username, password = get_credentials()
-    browser = initialize_browser()
+    # Parse command line arguments
+    twitter_id = None
+    headless = False
+    
+    # Simple command line parsing
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if not arg.startswith('--'):
+                twitter_id = arg
+            elif arg == '--headless':
+                headless = True
+    
+    username, password = get_credentials(twitter_id)
+    browser = initialize_browser(headless)
     
     try:
         if login_to_twitter(browser, username, password):
